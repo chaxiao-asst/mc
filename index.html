@@ -1,0 +1,700 @@
+<html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MC整合包聚合平台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#36D399',
+            neutral: '#1F2937',
+            'neutral-light': '#F3F4F6',
+            success: '#10B981',
+            danger: '#EF4444',
+            warning: '#F59E0B',
+            info: '#3B82F6',
+            'primary-dark': '#0E42B3',
+            'primary-light': '#E6F7FF',
+            'access': '#10B981', // 绿色访问按钮
+            'copy': '#3B82F6', // 浅蓝色复制按钮
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out',
+            'pulse-soft': 'pulseSoft 2s infinite',
+            'bounce-slow': 'bounce 3s infinite',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { transform: 'translateY(10px)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            pulseSoft: {
+              '0%, 100%': { opacity: '1' },
+              '50%': { opacity: '0.7' },
+            }
+          }
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-shadow {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+      .link-hover {
+        @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+      }
+      .tag-pill {
+        @apply px-2 py-1 text-xs rounded-full bg-primary/10 text-primary;
+      }
+      .tag-pill-v2 {
+        @apply px-3 py-1.5 rounded-full text-sm flex items-center transition-all cursor-pointer;
+      }
+      .tag-pill-v2-active {
+        @apply bg-primary text-white;
+      }
+      .tag-pill-v2-inactive {
+        @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+      }
+      .btn-action {
+        @apply p-2 rounded-lg transition-colors hover:bg-gray-100;
+      }
+      .btn-primary {
+        @apply px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors;
+      }
+      .btn-secondary {
+        @apply px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-neutral rounded-lg transition-colors;
+      }
+      .input-field {
+        @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all;
+      }
+      .modal-transition {
+        @apply transition-all duration-300;
+      }
+      .nav-shadow {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+      .text-balance {
+        text-wrap: balance;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .rating-star {
+        @apply text-yellow-400;
+      }
+      .backdrop-blur {
+        backdrop-filter: blur(8px);
+      }
+      .text-gradient {
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .btn-hover-scale {
+        @apply transition-transform duration-300 hover:scale-105;
+      }
+      .card-content {
+        @apply flex flex-col h-full;
+      }
+      .card-text {
+        @apply flex-grow;
+      }
+      .search-container {
+        @apply max-w-2xl mx-auto w-full;
+      }
+      .btn-group {
+        @apply flex gap-2;
+      }
+      .btn-copy {
+        @apply flex-1 py-2 bg-copy hover:bg-copy/90 text-white rounded-lg text-center transition-colors flex items-center justify-center;
+      }
+      .btn-copied {
+        @apply bg-success hover:bg-success/90;
+      }
+    }
+  </style>
+</head>
+
+<body class="font-inter bg-gray-50 text-neutral min-h-screen flex flex-col">
+  <!-- 导航栏 -->
+  <header class="bg-white sticky top-0 z-50 transition-all duration-300" id="navbar">
+    <div class="container mx-auto px-4 py-3">
+      <div class="flex flex-col md:flex-row md:items-center justify-between">
+        <!-- Logo区域 - 移动到搜索框左边 -->
+        <div class="flex items-center mb-4 md:mb-0">
+          <i class="fa fa-cubes text-primary text-xl"></i>
+          <h1 class="text-xl font-bold text-neutral ml-2">MC</h1>
+        </div>
+
+        <!-- 居中搜索框 -->
+        <div class="search-container relative md:ml-auto">
+          <input type="text" id="search-input" placeholder="搜索..." class="input-field pl-10 pr-4 text-center md:text-left">
+          <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow container mx-auto px-4 py-6">
+    <!-- 分类标签 - 添加了flex-nowrap和scrollbar-hide类 -->
+    <div class="overflow-x-auto pb-2 mb-6">
+      <div class="flex flex-nowrap space-x-2 min-w-max scrollbar-hide" id="categories-container">
+        <button class="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium flex items-center category-btn" data-category="全部">
+          <i class="fa fa-th-large mr-2"></i>全部
+        </button>
+        <!-- 分类标签将通过JavaScript动态生成 -->
+      </div>
+    </div>
+
+    <!-- 网址卡片网格 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="links-container">
+      <!-- 网址卡片将通过JavaScript动态生成 -->
+    </div>
+
+    <!-- 空状态提示 -->
+    <div id="empty-state" class="col-span-full text-center py-12 hidden">
+      <div class="text-5xl text-gray-300 mb-4 animate-pulse-soft">
+        <i class="fa fa-link"></i>
+      </div>
+      <h3 class="text-xl font-medium text-gray-500 mb-2">还没有添加任何整合包</h3>
+      <p class="text-gray-400 mb-6">暂无可用整合包</p>
+    </div>
+
+    <!-- 整合包详情模态框 -->
+    <div id="package-detail-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center opacity-0 invisible modal-transition">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 transform scale-95 transition-all duration-300 max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+          <div class="flex items-center">
+            <h3 class="text-xl font-bold text-neutral" id="detail-title">整合包详情</h3>
+          </div>
+          <!-- 移除了右上角的关闭标志 -->
+        </div>
+
+        <div class="flex-grow overflow-y-auto p-6">
+          <div id="package-detail-content">
+            <!-- 整合包详情内容将通过JavaScript动态生成 -->
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-200">
+          <div class="flex justify-end space-x-3">
+            <button id="close-detail-btn" class="btn-secondary">
+              关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 通知提示 -->
+    <div id="notification" class="fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg transform translate-y-16 opacity-0 transition-all duration-500 z-50 flex items-center hidden">
+      <i class="fa mr-2 text-lg"></i>
+      <span id="notification-message"></span>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-white border-t border-gray-200 py-6">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <div class="flex items-center space-x-2 justify-center md:justify-start">
+            <i class="fa fa-cubes text-primary"></i>
+            <span class="text-lg font-bold text-neutral">MC资源</span>
+          </div>
+          <p class="text-gray-500 text-sm mt-1 text-center md:text-left">静态网站</p>
+        </div>
+
+        <div class="text-gray-500 text-sm">©&nbsp; 茶.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // 模拟数据 - 已更新简幻欢服务器信息
+    let linksData = [
+      {
+        id: 1,
+        name: "落幕曲",
+        url: "https://pan.quark.cn/s/4e69ec77f734#/list/share",
+        category: "整合包",
+        tags: ["夸克网盘", "冒险", "魔法"],
+        description: "落幕曲是一款融合了冒险与魔法元素的整合包，拥有丰富的任务系统和独特的魔法体验。",
+      },
+      {
+        id: 2,
+        name: "乌托邦探险之旅",
+        url: "https://pan.quark.cn/s/eaea50184e65#/list/share",
+        category: "整合包",
+        tags: ["夸克网盘", "探险", "生存"],
+        description: "乌托邦探险之旅是一款以探险和生存为主题的整合包，包含大量新地形和生物，适合喜欢探索的玩家。",
+      },
+      {
+        id: 3,
+        name: "龙之冒险：新征程",
+        url: "https://pan.quark.cn/s/4ef84593cfca#/list/share",
+        category: "整合包",
+        tags: ["夸克网盘", "龙", "战斗"],
+        description: "龙之冒险：新征程以龙为主题，包含丰富的龙类生物和战斗系统，玩家可以与龙互动、驯养甚至骑乘它们。",
+      },
+      {
+        id: 4,
+        name: "刀剑异闻录",
+        url: "https://pan.quark.cn/s/109536493359#/list/share",
+        category: "整合包",
+        tags: ["夸克网盘", "刀剑", "RPG"],
+        description: "刀剑异闻录是一款以刀剑为主题的RPG整合包，包含丰富的武器系统和角色成长系统，玩家可以体验精彩的战斗和剧情。",
+      },
+      {
+        id: 5,
+        name: "异界战斗幻想",
+        url: "https://pan.quark.cn/s/a55475a1c732#/list/share",
+        category: "整合包",
+        tags: ["夸克网盘", "战斗", "幻想"],
+        description: "异界战斗幻想是一款以战斗为核心的幻想类整合包，包含多种战斗职业和技能系统，玩家可以体验刺激的战斗和探索。",
+      },
+      {
+        id: 6,
+        name: "幻想物语",
+        url: "https://pan.quark.cn/s/443057b06874#/list/share",
+        category: "整合包",
+        tags: ["夸克网盘", "魔法", "生存"],
+        description: "幻想物语是一款融合魔法与生存元素的整合包，玩家可以学习各种魔法技能，同时在充满挑战的世界中生存下来。",
+      },
+      {
+        id: 7,
+        name: "Better MC(更好的MC)",
+        url: "https://www.curseforge.com/minecraft/modpacks/better-mc-forge-bmc4",
+        category: "整合包",
+        tags: ["CurseForge", "优化", "基础"],
+        description: "Better MC是一款专注于优化和基础体验的整合包，包含多种性能优化模组和实用工具，让游戏运行更加流畅。",
+      },
+      {
+        id: 8,
+        name: "All the Mods 10",
+        url: "https://www.curseforge.com/minecraft/modpacks/all-the-mods-10",
+        category: "整合包",
+        tags: ["CurseForge", "科技", "综合"],
+        description: "All the Mods 10是一款综合性科技整合包，包含大量科技模组和自动化系统，适合喜欢复杂科技玩法的玩家。",
+      },
+      {
+        id: 9,
+        name: "齿轮盛宴",
+        url: "https://pan.quark.cn/s/5100fa468f4b#/list/share",
+        category: "整合包",
+        tags: ["夸克网盘", "机械动力", "农夫乐事", "休闲养老"],
+        description: "以机械动力&农夫乐事为核心的休闲养老整合包，旨在打造一个能够让各种不同偏好的mc玩家均可开心玩耍的整合包。",
+      },
+      {
+        id: 10,
+        name: "MC资源站",
+        url: "https://www.getmc.cc/",
+        category: "网站",
+        tags: ["汉化", "资源"],
+        description: "MC资源站提供大量Minecraft汉化整合包、Mod和插件，适合中国玩家使用。",
+      },
+      {
+        id: 11,
+        name: "CurseForge",
+        url: "https://www.curseforge.com/",
+        category: "网站",
+        tags: ["游戏", "Mod", "插件"],
+        description: "CurseForge是全球知名的游戏Mod和插件平台，提供海量Minecraft资源和官方支持。",
+      },
+      {
+        id: 12,
+        name: "Littleskin",
+        url: "https://littleskin.cn/",
+        category: "网站",
+        tags: ["皮肤", "汉化", "免费"],
+        description: "Littleskin是一个Minecraft皮肤站，提供免费的皮肤上传、下载和管理服务，支持正版验证和离线模式。",
+      },
+      {
+        id: 13,
+        name: "PCL2",
+        url: "https://ltcat.lanzouv.com/b0aj6gsid",
+        category: "启动器",
+        tags: ["密码pcl2", "启动器", "MC"],
+        description: "PCL2 (Minecraft Launcher) 是一款功能强大的Minecraft启动器，支持多种版本管理、模组安装和游戏设置，界面简洁易用，适合各类Minecraft玩家。密码：pcl2",
+      },
+      {
+        id: 14,
+        name: "简幻欢",
+        url: "https://simpfun.cn",
+        category: "服务器",
+        tags: ["公益免费", "低延迟", "极速部署"],
+        description: "简幻欢是一个公益免费，低延迟，极速部署游戏服务器平台",
+      }
+    ];
+
+    // 分类数据 - 新增"服务器"分类
+    let categories = ["整合包", "网站", "启动器", "服务器"];
+
+    // 标签筛选状态
+    let activeTags = [];
+    let allTags = [];
+    let filteredTags = [];
+    let showAllTags = false;
+
+    // DOM元素
+    const linksContainer = document.getElementById('links-container');
+    const searchInput = document.getElementById('search-input');
+    const navbar = document.getElementById('navbar');
+    const categoriesContainer = document.getElementById('categories-container');
+    const packageDetailModal = document.getElementById('package-detail-modal');
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notification-message');
+    
+    // 添加缺失的DOM引用
+    const detailTitle = document.getElementById('detail-title');
+    const detailTagsContainer = document.getElementById('detail-tags-container');
+    const packageDetailContent = document.getElementById('package-detail-content');
+    const emptyState = document.getElementById('empty-state');
+
+    // 当前选中的分类
+    let currentCategory = '全部';
+
+    // 初始化
+    function init() {
+      updateAllTags();
+      renderCategories();
+      filterAndRenderLinks();
+      updateEmptyState();
+      
+      // 绑定模态框关闭事件
+      packageDetailModal.addEventListener('click', function(e) {
+        if (e.target === packageDetailModal) {
+          closePackageDetailModal();
+        }
+      });
+      
+      // 使用事件委托处理关闭按钮
+      document.body.addEventListener('click', function(e) {
+        if (e.target.id === 'close-detail-btn') {
+          closePackageDetailModal();
+        }
+      });
+      
+      // 添加搜索功能
+      searchInput.addEventListener('input', handleSearch);
+    }
+
+    // 处理搜索功能
+    function handleSearch() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      
+      if (!searchTerm) {
+        // 如果搜索框为空，则显示所有链接
+        filterAndRenderLinks();
+        return;
+      }
+      
+      // 根据搜索词过滤链接
+      const filteredLinks = linksData.filter(link => {
+        return (
+          link.name.toLowerCase().includes(searchTerm) ||
+          link.description.toLowerCase().includes(searchTerm) ||
+          link.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+        );
+      });
+      
+      renderLinks(filteredLinks);
+      updateEmptyState();
+    }
+
+    // 更新所有标签列表
+    function updateAllTags() {
+      // 从所有链接中收集标签
+      const tagMap = {};
+      linksData.forEach(link => {
+        link.tags.forEach(tag => {
+          tagMap[tag] = (tagMap[tag] || 0) + 1;
+        });
+      });
+
+      // 转换为数组并按出现次数排序
+      allTags = Object.entries(tagMap)
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count);
+    }
+
+    // 渲染分类标签
+    function renderCategories() {
+      // 清空现有分类标签，保留"全部"
+      const allCategoryBtn = categoriesContainer.querySelector('.category-btn[data-category="全部"]');
+      categoriesContainer.innerHTML = '';
+      if (allCategoryBtn) {
+        categoriesContainer.appendChild(allCategoryBtn);
+      } else {
+        const allBtn = document.createElement('button');
+        allBtn.className = 'px-4 py-2 bg-primary text-white rounded-full text-sm font-medium flex items-center category-btn';
+        allBtn.setAttribute('data-category', '全部');
+        allBtn.innerHTML = '<i class="fa fa-th-large mr-2"></i>全部';
+        categoriesContainer.appendChild(allBtn);
+      }
+
+      // 添加自定义分类标签
+      categories.forEach(category => {
+        if (category === '全部') return;
+
+        const btn = document.createElement('button');
+        btn.className = `px-4 py-2 bg-white hover:bg-gray-100 rounded-full text-sm font-medium flex items-center transition-colors category-btn`;
+        btn.setAttribute('data-category', category);
+        btn.innerHTML = `<i class="fa fa-folder mr-2"></i>${category}`;
+        categoriesContainer.appendChild(btn);
+      });
+
+      // 添加分类按钮事件监听
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          // 移除所有按钮的选中状态
+          document.querySelectorAll('.category-btn').forEach(b => {
+            b.classList.remove('bg-primary', 'text-white');
+            b.classList.add('bg-white', 'hover:bg-gray-100');
+          });
+
+          // 添加当前按钮的选中状态
+          btn.classList.remove('bg-white', 'hover:bg-gray-100');
+          btn.classList.add('bg-primary', 'text-white');
+
+          // 更新当前分类
+          currentCategory = btn.getAttribute('data-category');
+
+          // 过滤并渲染链接
+          filterAndRenderLinks();
+        });
+      });
+    }
+
+    // 过滤并渲染链接
+    function filterAndRenderLinks() {
+      let filteredLinks = linksData;
+
+      // 按分类过滤
+      if (currentCategory !== '全部') {
+        filteredLinks = filteredLinks.filter(link => link.category === currentCategory);
+      }
+
+      renderLinks(filteredLinks);
+      updateEmptyState();
+    }
+
+    // 渲染网址卡片 - 统一卡片大小
+    function renderLinks(links) {
+      linksContainer.innerHTML = '';
+
+      if (links.length === 0) {
+        return;
+      }
+
+      links.forEach(link => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 link-hover animate-fade-in cursor-pointer';
+        card.setAttribute('data-id', link.id);
+        card.innerHTML = `
+          <div class="p-4 card-content">
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="font-medium text-lg truncate">${link.name}</h3>
+              <span class="tag-pill flex items-center">
+                <i class="fa fa-globe mr-1"></i>${link.category}
+              </span>
+            </div>
+            <div class="card-text">
+              <p class="text-gray-500 text-sm line-clamp-3 mb-4">${link.description}</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                ${link.tags.map(tag => `
+                  <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600 flex items-center tag-item" data-tag="${tag}">
+                    <i class="fa fa-tag mr-1 text-gray-400"></i>${tag}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+            <!-- 按钮组 - 包含访问和复制按钮 -->
+            <div class="mt-4 pt-2 border-t border-gray-100">
+              <div class="btn-group">
+                <a href="${link.url}" target="_blank" class="flex-1 py-2 bg-access hover:bg-access/90 text-white rounded-lg text-center transition-colors flex items-center justify-center">
+                  <i class="fa fa-external-link mr-2"></i> 访问
+                </a>
+                <button class="btn-copy" data-url="${link.url}">
+                  <i class="fa fa-copy mr-2"></i> 复制
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        linksContainer.appendChild(card);
+      });
+
+      // 添加卡片点击事件监听
+      document.querySelectorAll('#links-container > div').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = parseInt(card.getAttribute('data-id'));
+          openPackageDetail(id);
+        });
+      });
+      
+      // 添加复制按钮事件监听
+      document.querySelectorAll('.btn-copy').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const url = this.getAttribute('data-url');
+          copyToClipboard(url, this);
+        });
+      });
+    }
+
+    // 复制到剪贴板
+    function copyToClipboard(text, button) {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          // 更改按钮样式为已复制状态
+          button.innerHTML = '<i class="fa fa-check mr-2"></i> 已复制';
+          button.classList.add('btn-copied');
+          
+          // 显示通知
+          showNotification('链接已复制到剪贴板！', 'success');
+          
+          // 3秒后恢复按钮原始状态
+          setTimeout(() => {
+            button.innerHTML = '<i class="fa fa-copy mr-2"></i> 复制';
+            button.classList.remove('btn-copied');
+          }, 3000);
+        })
+        .catch(err => {
+          console.error('复制失败: ', err);
+          showNotification('复制失败，请手动复制链接。', 'error');
+        });
+    }
+
+    // 更新空状态显示
+    function updateEmptyState() {
+      if (linksData.length === 0) {
+        emptyState.classList.remove('hidden');
+        linksContainer.classList.add('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+        linksContainer.classList.remove('hidden');
+      }
+    }
+
+    // 打开整合包详情模态框
+    function openPackageDetail(id) {
+      const link = linksData.find(link => link.id === id);
+      if (!link) return;
+
+      detailTitle.textContent = link.name;
+
+      // 构建详情内容 - 标签已移至简介下方
+      packageDetailContent.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="md:col-span-2">
+            <h3 class="text-lg font-medium mb-3">简介</h3>
+            <p class="text-gray-600 mb-4">${link.description}</p>
+            
+            <!-- 标签已从标题旁边移至此处 -->
+            <div id="detail-tags-container" class="flex flex-wrap gap-2 mb-6">
+              ${link.tags.map(tag => `
+                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm tag-item-detail">
+                  ${tag}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="md:col-span-1">
+            <div class="bg-gray-50 p-4 rounded-lg sticky top-24">
+              <h3 class="text-lg font-medium mb-3">网址</h3>
+              <div class="mb-4">
+                <p class="text-sm text-gray-500 mb-1">链接</p>
+                <div class="flex">
+                  <input type="text" value="${link.url}" readonly class="input-field pr-10 text-sm flex-grow">
+                  <!-- 复制按钮改为浅蓝色 -->
+                  <button class="ml-2 p-2 bg-copy text-white rounded-lg hover:bg-copy/90 transition-colors" id="copy-url-btn">
+                    <i class="fa fa-copy"></i>
+                  </button>
+                </div>
+              </div>
+
+              <h3 class="text-lg font-medium mb-3">操作</h3>
+              <div class="space-y-3">
+                <!-- 访问按钮改为绿色 -->
+                <a href="${link.url}" target="_blank" class="block w-full py-2.5 bg-access text-white rounded-lg text-center hover:bg-access/90 transition-colors flex items-center justify-center btn-hover-scale" id="detail-download-btn">
+                  <i class="fa fa-external-link mr-2"></i> 访问
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // 添加复制链接按钮事件监听
+      document.getElementById('copy-url-btn').addEventListener('click', () => {
+        const input = document.querySelector('input[readonly]');
+        input.select();
+        document.execCommand('copy');
+        showNotification('链接已复制到剪贴板！', 'success');
+      });
+
+      // 显示详情模态框
+      packageDetailModal.classList.remove('opacity-0', 'invisible');
+      packageDetailModal.querySelector('div').classList.remove('scale-95');
+      packageDetailModal.querySelector('div').classList.add('scale-100');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // 关闭整合包详情模态框
+    function closePackageDetailModal() {
+      packageDetailModal.classList.add('opacity-0', 'invisible');
+      packageDetailModal.querySelector('div').classList.remove('scale-100');
+      packageDetailModal.querySelector('div').classList.add('scale-95');
+      document.body.style.overflow = '';
+    }
+
+    // 显示通知
+    function showNotification(message, type) {
+      const iconMap = {
+        success: 'fa-check',
+        error: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+      };
+      const iconClass = iconMap[type] || 'fa-info-circle';
+      notificationMessage.textContent = message;
+      notification.querySelector('i').className = `fa ${iconClass}`;
+      notification.classList.remove('opacity-0', 'translate-y-16', 'hidden');
+      setTimeout(() => {
+        notification.classList.add('opacity-0', 'translate-y-16');
+        setTimeout(() => {
+          notification.classList.add('hidden');
+        }, 500);
+      }, 3000);
+    }
+
+    // 初始化
+    init();
+  </script>
+
+
+</body></html>
