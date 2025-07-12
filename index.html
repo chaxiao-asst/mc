@@ -533,15 +533,15 @@
                 `).join('')}
               </div>
             </div>
-            <!-- 按钮组 - 包含访问和复制按钮 -->
+            <!-- 按钮组 - 包含访问和复制按钮，位置已交换 -->
             <div class="mt-4 pt-2 border-t border-gray-100">
               <div class="btn-group">
-                <a href="${link.url}" target="_blank" class="flex-1 py-2 bg-access hover:bg-access/90 text-white rounded-lg text-center transition-colors flex items-center justify-center">
-                  <i class="fa fa-external-link mr-2"></i> 访问
-                </a>
-                <button class="btn-copy" data-url="${link.url}">
+                <button class="btn-copy btn-hover-scale" data-url="${link.url}">
                   <i class="fa fa-copy mr-2"></i> 复制
                 </button>
+                <a href="${link.url}" target="_blank" class="flex-1 py-2 bg-access hover:bg-access/90 text-white rounded-lg text-center transition-colors flex items-center justify-center btn-hover-scale" data-id="${link.id}">
+                  <i class="fa fa-external-link mr-2"></i> 访问
+                </a>
               </div>
             </div>
           </div>
@@ -549,9 +549,19 @@
         linksContainer.appendChild(card);
       });
 
-      // 添加卡片点击事件监听
+      // 添加卡片点击事件监听 - 排除访问按钮
       document.querySelectorAll('#links-container > div').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
+          // 检查点击的是否是访问按钮或其内部元素
+          if (e.target.closest('.btn-group a')) {
+            return; // 如果是，不打开详情，让链接正常跳转
+          }
+          
+          // 检查点击的是否是复制按钮或其内部元素
+          if (e.target.closest('.btn-copy')) {
+            return; // 如果是，不打开详情，让复制功能正常工作
+          }
+          
           const id = parseInt(card.getAttribute('data-id'));
           openPackageDetail(id);
         });
@@ -559,9 +569,17 @@
       
       // 添加复制按钮事件监听
       document.querySelectorAll('.btn-copy').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation(); // 阻止事件冒泡到卡片
           const url = this.getAttribute('data-url');
           copyToClipboard(url, this);
+        });
+      });
+      
+      // 添加访问按钮事件监听
+      document.querySelectorAll('.btn-group a').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation(); // 阻止事件冒泡到卡片
         });
       });
     }
@@ -632,7 +650,7 @@
                 <div class="flex">
                   <input type="text" value="${link.url}" readonly class="input-field pr-10 text-sm flex-grow">
                   <!-- 复制按钮改为浅蓝色 -->
-                  <button class="ml-2 p-2 bg-copy text-white rounded-lg hover:bg-copy/90 transition-colors" id="copy-url-btn">
+                  <button class="ml-2 p-2 bg-copy text-white rounded-lg hover:bg-copy/90 transition-colors btn-hover-scale" id="copy-url-btn">
                     <i class="fa fa-copy"></i>
                   </button>
                 </div>
